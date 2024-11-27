@@ -1,7 +1,5 @@
-// import React Native components
+// import React Native components and Navigation
 import { StyleSheet } from 'react-native';
-
-// import react Navigation
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -9,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// import the screens
+// import components for the app
 import Start from './components/Start.js';
 import Chat from './components/Chat.js';
 
@@ -42,9 +40,9 @@ const App = () => {
             component={Start}
           />
           <Stack.Screen
-            name="Chat"
-            {props => <Chat db={db} {...props}/>}
-          />
+            name="Chat">
+            {props => <Chat db={db} {...props} />}
+          </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
