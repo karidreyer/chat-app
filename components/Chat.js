@@ -1,37 +1,38 @@
-// This is the Chat screen component. It will display the chat interface where users can send and receive messages.
-
+// Import necessary components from React and React Native
 import { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Bubble, GiftedChat } from "react-native-gifted-chat";
 
-const Chat = ({ route, navigation }) => {
-	const { name, backgroundColor } = route.params; // Extract name and backgroundColor from the Start screen's route params
+import { addDoc, collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
+
+const Chat = ({ route, navigation, db }) => {
+	const { name, backgroundColor, uid } = route.params; // Extract name and backgroundColor from the Start screen's route params
   	const [messages, setMessages] = useState([]); // State to hold the chat messages
 
   	const onSend = (newMessages) => {
-    	setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
+    	addDoc(collection(db, "messages"), newMessages[0])
   	}
 
   	useEffect(() => {
 		navigation.setOptions({ title: name }); // Update the title in the navigation bar to the user's name as entered on the Start screen
-    	setMessages([
-         	{	
-            	_id: 1,
-            	text: 'Hello!',
-            	createdAt: new Date(),
-            	user: {
-               		_id: 2,
-              		name: 'React Native',
-              		avatar: 'https://placehold.co/140x140',
-            	},
-          	},
-			{
-				_id: 2,
-				text: 'You have entered the chat!',
-				createdAt: new Date(),
-				system: true,
-			},
-    	]);
+		
+		const q = query(collection(db, "messages"), orderBy("createdAt", "desc")); // Query to get messages from Firestore
+		
+		// Subscribe to the query and update the messages state, unsubscribe when the component unmounts
+		const unsubMessages = onSnapshot(q, (docs) => {
+			let newMessages = [];
+			docs.forEach(doc => {
+			  	newMessages.push({
+					id: doc.id,
+					...doc.data(),
+					createdAt: new Date(doc.data().createdAt.toMillis())
+			  	})
+			})
+			setMessages(newMessages);
+		})
+		return () => {
+			if (unsubMessages) unsubMessages();
+		}
   	}, []);
 
 	// Customizing the chat bubble
@@ -56,7 +57,8 @@ const Chat = ({ route, navigation }) => {
 				renderBubble={renderBubble}
 				onSend={messages => onSend(messages)}
 				user={{
-					_id: 1
+					_id: uid,
+					name: name,
 				}}
      		/>
       		{/* Prevents keyboard from overlapping the input field */}
