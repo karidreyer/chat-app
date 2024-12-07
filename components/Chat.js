@@ -1,11 +1,13 @@
 // Import necessary components from React and React Native
 import { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { addDoc, collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
+// Import functions from Firebase for Firestore
+import { addDoc, collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
-const Chat = ({ route, navigation, db }) => {
+const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	const { name, backgroundColor, uid } = route.params; // Extract name and backgroundColor from the Start screen's route params
   	const [messages, setMessages] = useState([]); // State to hold the chat messages
 
@@ -13,27 +15,50 @@ const Chat = ({ route, navigation, db }) => {
     	addDoc(collection(db, "messages"), newMessages[0])
   	}
 
+	let unsubMessages;
+
   	useEffect(() => {
-		navigation.setOptions({ title: name }); // Update the title in the navigation bar to the user's name as entered on the Start screen
-		
-		const q = query(collection(db, "messages"), orderBy("createdAt", "desc")); // Query to get messages from Firestore
-		
-		// Subscribe to the query and update the messages state, unsubscribe when the component unmounts
-		const unsubMessages = onSnapshot(q, (docs) => {
-			let newMessages = [];
-			docs.forEach(doc => {
-			  	newMessages.push({
-					id: doc.id,
-					...doc.data(),
-					createdAt: new Date(doc.data().createdAt.toMillis())
-			  	})
-			})
-			setMessages(newMessages);
-		})
+		if (isConnected === true) {
+			if (unsubMessages) unsubMessages(); // unregister current onSnapshot() listener to avoid registering multiple listeners when useEffect code is re-executed
+      		unsubMessages = null;
+			navigation.setOptions({ title: name }); // Update the title in the navigation bar to the user's name as entered on the Start screen
+			
+			const q = query(collection(db, "messages"), orderBy("createdAt", "desc")); // Query to get messages from Firestore
+			
+			// Subscribe to the query and update the messages state, unsubscribe when the component unmounts
+			unsubMessages = onSnapshot(q, (docs) => {
+				let newMessages = [];
+				docs.forEach(doc => {
+					newMessages.push({
+						id: doc.id,
+						...doc.data(),
+						createdAt: new Date(doc.data().createdAt.toMillis())
+					})
+				});
+				cacheMessages(newMessages);
+				setMessages(newMessages);
+			});
+		} else loadCachedMessages();
+
+		// Clean up the listener
 		return () => {
 			if (unsubMessages) unsubMessages();
 		}
-  	}, []);
+  	}, [isConnected]); // "isConnected" here is added as a dependency in order to re-run the effect when the connection status changes
+
+	// Cache messages in AsyncStorage
+	const cacheMessages = async (messagesToCache) => {
+        try {
+            await AsyncStorage.setItem('messages', JSON.stringify(messagesToCache));
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+     // Load cached messages from AsyncStorage
+    const loadCachedMessages = async () => {
+        const cachedMessages = await AsyncStorage.getItem("messages") || [];
+        setLists(JSON.parse(cachedMessages));
+    }
 
 	// Customizing the chat bubble
 	const renderBubble = (props) => {
@@ -50,11 +75,18 @@ const Chat = ({ route, navigation, db }) => {
 		/>
 	}
 
+	// Prevents the user from sending messages when offline
+	const renderInputToolbar = (props) => {
+		if (isConnected) return <InputToolbar {...props} />;
+		else return null;
+	   }
+
  	return (
    		<View style={[styles.container, {backgroundColor}]}> 
      		<GiftedChat 
       			messages={messages}
 				renderBubble={renderBubble}
+				renderInputToolbar={renderInputToolbar}
 				onSend={messages => onSend(messages)}
 				user={{
 					_id: uid,
