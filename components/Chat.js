@@ -34,7 +34,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 				let newMessages = [];
 				docs.forEach(doc => {
 					newMessages.push({
-						id: doc.id,
+						_id: doc.id,
 						...doc.data(),
 						createdAt: new Date(doc.data().createdAt.toMillis())
 					})
@@ -87,45 +87,22 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 
 	// Create a custom actions component to allow users to take photos, choose images from the library, and share their location
 	const renderCustomActions = (props) => {
-		return <CustomActions onSend={onSend} {...props} />;
+		return <CustomActions onSend={onSend} uid={uid} {...props} />;
 	};
 
 	// Create a custom view to display the user's location on a map
-	// const renderCustomView = (props) => {
-	// 	const { currentMessage } = props;
-	// 	if (currentMessage.location) {
-	// 		return (
-	// 			<MapView
-	// 				style={{width: 150,
-	// 				height: 100,
-	// 				borderRadius: 13,
-	// 				margin: 3}}
-	// 				region={{
-	// 					latitude: currentMessage.location.latitude,
-	// 					longitude: currentMessage.location.longitude,
-	// 					latitudeDelta: 0.0922,
-	// 					longitudeDelta: 0.0421,
-	// 				}}
-	// 			/>
-	// 		);
-	// 	}
-	// 	return null;
-	// }
-
 	const renderCustomView = (props) => {
-		console.log("renderCustomView currentMessage:", props.currentMessage);
-		if (props.currentMessage && props.currentMessage.location) {
+		const { currentMessage } = props;
+		if (currentMessage.location) {
 			return (
 				<MapView
-					style={{
-						width: 150,
-						height: 100,
-						borderRadius: 13,
-						margin: 3,
-					}}
+					style={{width: 150,
+					height: 100,
+					borderRadius: 13,
+					margin: 3}}
 					region={{
-						latitude: props.currentMessage.location.latitude,
-						longitude: props.currentMessage.location.longitude,
+						latitude: currentMessage.location.latitude,
+						longitude: currentMessage.location.longitude,
 						latitudeDelta: 0.0922,
 						longitudeDelta: 0.0421,
 					}}
@@ -133,7 +110,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 			);
 		}
 		return null;
-	};
+	}
 
  	return (
    		<View style={[styles.container, {backgroundColor}]}> 

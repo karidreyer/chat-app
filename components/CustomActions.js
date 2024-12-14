@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
 // Create a function to handle the custom actions options
-const CustomActions = ({ wrapperStyle, iconTextStyle, onSend }) => {
+const CustomActions = ({ wrapperStyle, iconTextStyle, uid, onSend }) => {
     const actionSheet = useActionSheet();
     
     //display a menu with options (take photo, select photo, share location)
@@ -66,6 +66,10 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend }) => {
     //         const location = await Location.getCurrentPositionAsync({});
     //         if (location) {
     //             onSend({
+    //                 user: {
+    //                     _id: uid,
+    //                 },
+    //                 createdAt: new Date(),
     //                 location: {
     //                     longitude: location.coords.longitude,
     //                     latitude: location.coords.latitude,
@@ -84,6 +88,10 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend }) => {
                 const location = await Location.getCurrentPositionAsync({});
                 console.log("Location fetched:", location); // Log the location data
                 const locationMessage = {
+                    user: {
+                        _id: uid,
+                    },
+                    createdAt: new Date(),
                     location: {
                         latitude: location.coords.latitude,
                         longitude: location.coords.longitude,
