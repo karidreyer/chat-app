@@ -1,9 +1,7 @@
-// Import the necessary functions from React
 import { useState } from 'react';
 import { Alert, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// Import the necessary functions from Firebase
 import { getAuth, signInAnonymously } from "firebase/auth";
+
 
 const Start = ({ navigation }) => {
     const [name, setName] = useState(''); // State to hold the name input value
