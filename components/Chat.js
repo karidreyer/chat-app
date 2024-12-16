@@ -1,17 +1,14 @@
-// Import necessary components from React and React Native
 import { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapView from "react-native-maps";
-
-// Import functions from Firebase for Firestore
 import { addDoc, collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
-// Import the CustomActions component
 import CustomActions from './CustomActions';
 
-const Chat = ({ route, navigation, db, isConnected }) => {
+
+const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	const { name, backgroundColor, uid } = route.params; // Extract name and backgroundColor from the Start screen's route params
   	const [messages, setMessages] = useState([]); // State to hold the chat messagess
 
@@ -87,7 +84,15 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 
 	// Create a custom actions component to allow users to take photos, choose images from the library, and share their location
 	const renderCustomActions = (props) => {
-		return <CustomActions onSend={onSend} uid={uid} {...props} />;
+		return (
+			<CustomActions 
+				onSend={onSend} 
+				uid={uid} 
+				name={name}
+				storage={storage} 
+				{...props} 
+			/>
+		);
 	};
 
 	// Create a custom view to display the user's location on a map
